@@ -21,9 +21,11 @@ def test(text):
         q=text,
     )
     response = request.execute()
-
-    print("https://youtube.com/v/" + response["items"][0]["id"]["videoId"])
-    return "https://youtube.com/v/" + response["items"][0]["id"]["videoId"]
+    try:
+        print("https://youtube.com/v/" + response["items"][0]["id"]["videoId"])
+        return "https://youtube.com/v/" + response["items"][0]["id"]["videoId"]
+    except Exception:
+        return "换个关键词吧！"
 
 if __name__ == "__main__":
     test("nb")
