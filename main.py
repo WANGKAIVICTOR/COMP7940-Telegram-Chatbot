@@ -1,5 +1,4 @@
 import configparser
-import sqlite3
 from telegram import Update
 from telegram.ext import ApplicationBuilder, Application, CommandHandler, ContextTypes, MessageHandler, filters
 from utils import test
