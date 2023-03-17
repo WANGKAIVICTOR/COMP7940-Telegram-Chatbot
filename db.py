@@ -1,6 +1,5 @@
 import sqlite3  # python build in database
 import requests  # fetch source data online
-import pandas as pd
 import json  # convert json source data to dict
 
 
