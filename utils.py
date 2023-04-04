@@ -1,7 +1,6 @@
 import os
 import json
 import configparser
-import google_auth_oauthlib.flow
 import googleapiclient.discovery
 import googleapiclient.errors
 
@@ -26,6 +25,8 @@ def test(text):
         return "https://youtube.com/v/" + response["items"][0]["id"]["videoId"]
     except Exception:
         return "换个关键词吧！"
+
+
 
 if __name__ == "__main__":
     test("nb")

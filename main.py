@@ -5,6 +5,7 @@ from telegram.ext import ApplicationBuilder, Application, CommandHandler, Contex
 from utils import test, gbfUtils
 from chatbot import OpenAIBot
 from log import logger
+from videoData import inserVideoData
 
 allowed_user_list = ["riverfjs", "victorwangkai", -1001643700527]
 tt = OpenAIBot()
@@ -71,6 +72,8 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # await update.message.reply_text(update.message.chat.id)
     await update.message.reply_text(update.message.chat)
 
+inserVideoData() # prepare the video data
+
 app = ApplicationBuilder().token(
     token=(config['TELEGRAM']['ACCESS_TOKEN'])).build()
 redis1 = redis.Redis(host=(config['REDIS']['HOST']), password=(config['REDIS']
@@ -83,7 +86,7 @@ app.add_handler(CommandHandler("image", image))
 app.add_handler(CommandHandler("video", ytb))
 
 
-app.add_handler(CommandHandler("add", add))
+# app.add_handler(CommandHandler("add", add))
 
 # app.add_handler(CallbackQueryHandler(button))
 # app.add_handler(CommandHandler("startchat", start_chat))

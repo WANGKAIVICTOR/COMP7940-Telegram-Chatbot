@@ -1,6 +1,6 @@
-import sqlite3  # python build in database
 import requests  # fetch source data online
-import json  # convert json source data to dict
+import pymysql
+import configparser
 
 
 def processVideoData():
@@ -14,11 +14,11 @@ def processVideoData():
     url = "https://radiant-island-16688.herokuapp.com/getRecipe/4fbc68d6-de7d-437f-a017-e4f99afb4471"  # source data url
     headers = {
         "user-agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1"
-    } # define headers, it's used to fetch data
+    }  # define headers, it's used to fetch data
     response = requests.get(url, headers=headers)  # fetch data in json file
     items = response.json()  # extract data
     data = []
-    for item in items: # process data one by one accroding to the key value
+    for item in items:  # process data one by one accroding to the key value
         del item['UUID'], item['directions'], item['shortDescription'], item['showRecipe']
         entity = []
         for key in item:
@@ -37,34 +37,30 @@ def processVideoData():
                 entity.append(','.join(map(str, item[key])))
             else:
                 entity.append(item[key])
-        data.append(tuple(entity)) # convert the list to tuple and insert it into a list
-    return data # the data could be inserted into the database
+        # convert the list to tuple and insert it into a list
+        data.append(tuple(entity))
+    return data  # the data could be inserted into the database
+
 
 def inserVideoData():
     '''
     This function is used to create the video table in the database and also insert the processed data into the table.
     '''
 
-    connection = sqlite3.connect("database.db")  # create/connect the database
+    config = configparser.ConfigParser()
+    config.read('config.ini', encoding='utf-8')
+    connection = pymysql.connect(host=config['SQL']['HOST'], user=config['SQL']['USER'], password=config['SQL']['PASSWORD'], port=int(
+        config['SQL']['PORT']), database=config['SQL']['DBNAME'])  # create/connect the database
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
-    cursor.execute('''CREATE TABLE IF NOT EXISTS VIDEO 
-    (ID INT PRIMARY KEY NOT NULL,
-    recipeImageSrc VARCHAR NOT NULL,
-    videoURL VARCHAR NOT NULL,
-    recipeName VARCHAR NOT NULL,
-    servingSize VARCHAR NOT NULL,
-    prepTime VARCHAR NOT NULL,
-    calories VARCHAR NOT NULL,
-    fat VARCHAR NOT NULL,
-    carbohydrate VARCHAR NOT NULL,
-    protien VARCHAR NOT NULL,
-    tags VARCHAR NOT NULL,
-    totalTime VARCHAR NOT NULL,
-    dish VARCHAR NOT NULL,
-    ingredient VARCHAR NOT NULL,
-    expertTips TEXT NOT NULL);''') # create video table
-    cursor.executemany('insert into video values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);', processVideoData()) # insert entities
-    connection.commit() # save the data
-    connection.close() # disconnect
 
-inserVideoData()
+    query = "SELECT * FROM VIDEO"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+
+    if(len(rows) == 0):  # if there is no data in video table, insert
+        cursor.execute('''CREATE TABLE IF NOT EXISTS VIDEO 
+        (ID INT PRIMARY KEY NOT NULL,recipeImageSrc VARCHAR(255) NOT NULL,videoURL VARCHAR(255) NOT NULL,recipeName VARCHAR(255) NOT NULL,servingSize VARCHAR(255) NOT NULL,prepTime VARCHAR(255) NOT NULL,calories VARCHAR(255) NOT NULL,fat VARCHAR(255) NOT NULL,carbohydrate VARCHAR(255) NOT NULL,protien VARCHAR(255) NOT NULL,tags VARCHAR(255) NOT NULL,totalTime VARCHAR(255) NOT NULL,dish VARCHAR(255) NOT NULL,ingredient TEXT NOT NULL,expertTips TEXT NOT NULL);''')  # create video table
+        cursor.executemany('INSERT INTO video (ID,recipeImageSrc,videoURL,recipeName,servingSize,prepTime,calories,fat,carbohydrate,protien,tags,totalTime,dish,ingredient,expertTips) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);', processVideoData())  # insert entities
+        connection.commit()  # save the data
+
+    connection.close()  # disconnect
