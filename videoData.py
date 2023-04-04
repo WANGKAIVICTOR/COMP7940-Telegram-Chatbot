@@ -1,6 +1,7 @@
 import requests  # fetch source data online
 import pymysql
 import configparser
+from log import logger
 
 
 def processVideoData():
@@ -18,6 +19,7 @@ def processVideoData():
     response = requests.get(url, headers=headers)  # fetch data in json file
     items = response.json()  # extract data
     data = []
+    logger.info("Video data fetched.")
     for item in items:  # process data one by one accroding to the key value
         del item['UUID'], item['directions'], item['shortDescription'], item['showRecipe']
         entity = []
@@ -39,6 +41,7 @@ def processVideoData():
                 entity.append(item[key])
         # convert the list to tuple and insert it into a list
         data.append(tuple(entity))
+    logger.info("Video data processed.")
     return data  # the data could be inserted into the database
 
 
@@ -53,14 +56,18 @@ def inserVideoData():
         config['SQL']['PORT']), database=config['SQL']['DBNAME'])  # create/connect the database
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
 
+    logger.info("Connected to the database in video part.")
     query = "SELECT * FROM VIDEO"
     cursor.execute(query)
     rows = cursor.fetchall()
 
     if(len(rows) == 0):  # if there is no data in video table, insert
+        logger.info("The table is empty, inserting the video data.")
         cursor.execute('''CREATE TABLE IF NOT EXISTS VIDEO 
         (ID INT PRIMARY KEY NOT NULL,recipeImageSrc VARCHAR(255) NOT NULL,videoURL VARCHAR(255) NOT NULL,recipeName VARCHAR(255) NOT NULL,servingSize VARCHAR(255) NOT NULL,prepTime VARCHAR(255) NOT NULL,calories VARCHAR(255) NOT NULL,fat VARCHAR(255) NOT NULL,carbohydrate VARCHAR(255) NOT NULL,protien VARCHAR(255) NOT NULL,tags VARCHAR(255) NOT NULL,totalTime VARCHAR(255) NOT NULL,dish VARCHAR(255) NOT NULL,ingredient TEXT NOT NULL,expertTips TEXT NOT NULL);''')  # create video table
         cursor.executemany('INSERT INTO video (ID,recipeImageSrc,videoURL,recipeName,servingSize,prepTime,calories,fat,carbohydrate,protien,tags,totalTime,dish,ingredient,expertTips) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);', processVideoData())  # insert entities
         connection.commit()  # save the data
-
+        logger.info("Video data inserted.")
+        
+    logger.info("Disconnected the database.")
     connection.close()  # disconnect
