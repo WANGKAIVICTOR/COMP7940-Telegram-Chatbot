@@ -2,6 +2,7 @@ import requests  # fetch source data online
 import pymysql
 import configparser
 from log import logger
+import random
 
 
 def get_db_connection():
@@ -114,5 +115,5 @@ def get_info_with_tag(tag):
 
     cursor = get_db_connection().cursor()
     cursor.execute("SELECT * from video WHERE tags LIKE '%"+tag+"%'")
-    data = cursor.fetchone()
-    return str(data)
+    data = cursor.fetchall()
+    return str(random.choice(data))
