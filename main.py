@@ -2,19 +2,20 @@ import configparser
 import redis
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, Application, CommandHandler, ContextTypes, MessageHandler, CallbackQueryHandler, filters
-from utils import test, gbfUtils
+from utils import test
 from chatbot import OpenAIBot
 from log import logger
-from videoData import inserVideoData
+from database import insert_video_data, get_meals_tags,get_info_with_tag
 
 allowed_user_list = ["riverfjs", "victorwangkai", -1001643700527]
 tt = OpenAIBot()
 config = configparser.ConfigParser()
 config.read('config.ini', encoding='utf-8')
+insert_video_data()  # prepare the video data
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    # """Send a message when the command /help is issued."""
+    """Send a message when the command /help is issued."""
     await update.message.reply_text("你好, {}, 请选择左下角菜单开始使用！喵~".format(update.message.from_user["first_name"]))
 
 
@@ -72,18 +73,29 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     # await update.message.reply_text(update.message.chat.id)
     await update.message.reply_text(update.message.chat)
 
-inserVideoData() # prepare the video data
 
-app = ApplicationBuilder().token(
-    token=(config['TELEGRAM']['ACCESS_TOKEN'])).build()
-redis1 = redis.Redis(host=(config['REDIS']['HOST']), password=(config['REDIS']
-                                                               ['PASSWORD']), port=(config['REDIS']['REDISPORT']))
+async def cook(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send meals video to user."""
+    user = update.message.from_user
+    chatID = update.message.chat.id
+    if user["username"] in allowed_user_list or chatID in allowed_user_list:
+        keyword = " ".join(context.args)
+        if not keyword:
+            tags = get_meals_tags()
+            await update.message.reply_text("请在命令后输入文字 /cook <keyword>，你可以选择："+tags+"喵~")
+        else:
+            await update.message.reply_text(get_info_with_tag(keyword))
+    else:
+        await update.message.reply_text("对不起，不认识你！ 喵~ 不给用 喵~")
+
+app = ApplicationBuilder().token(token=(config['TELEGRAM']['ACCESS_TOKEN'])).build()
 
 app.add_handler(CommandHandler("start", start_command))
 app.add_handler(CommandHandler("help", help_command))
 app.add_handler(CommandHandler("chat", chat))
 app.add_handler(CommandHandler("image", image))
 app.add_handler(CommandHandler("video", ytb))
+app.add_handler(CommandHandler("cook", cook))
 
 
 # app.add_handler(CommandHandler("add", add))

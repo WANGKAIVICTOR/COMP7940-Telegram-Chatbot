@@ -4,7 +4,26 @@ import configparser
 from log import logger
 
 
-def processVideoData():
+def get_db_connection():
+    '''
+    This function is used to connect to the database, if there's no such database, create it.
+
+    Return:
+        connection of database
+    '''
+
+    logger.info("Connecting databse")
+    config = configparser.ConfigParser()
+    config.read('config.ini', encoding='utf-8')
+    connection = pymysql.connect(host=config['SQL']['HOST'], user=config['SQL']['USER'], password=config['SQL']['PASSWORD'], port=int(
+        config['SQL']['PORT']), autocommit=True, cursorclass=pymysql.cursors.DictCursor)
+    connection.cursor().execute('CREATE DATABASE IF NOT EXISTS %s;' % "telegram_chatbot")
+    connection.select_db("telegram_chatbot")
+    logger.info("Database connected")
+    return connection
+
+
+def process_video_data():
     '''
     This function is used to fetch and process video data, so that it can be inserted into database.
 
@@ -45,15 +64,12 @@ def processVideoData():
     return data  # the data could be inserted into the database
 
 
-def inserVideoData():
+def insert_video_data():
     '''
     This function is used to create the video table in the database and also insert the processed data into the table.
     '''
 
-    config = configparser.ConfigParser()
-    config.read('config.ini', encoding='utf-8')
-    connection = pymysql.connect(host=config['SQL']['HOST'], user=config['SQL']['USER'], password=config['SQL']['PASSWORD'], port=int(
-        config['SQL']['PORT']), database=config['SQL']['DBNAME'])  # create/connect the database
+    connection = get_db_connection()
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
 
     logger.info("Connected to the database in video part.")
@@ -63,11 +79,40 @@ def inserVideoData():
 
     if(len(rows) == 0):  # if there is no data in video table, insert
         logger.info("The table is empty, inserting the video data.")
-        cursor.execute('''CREATE TABLE IF NOT EXISTS VIDEO 
-        (ID INT PRIMARY KEY NOT NULL,recipeImageSrc VARCHAR(255) NOT NULL,videoURL VARCHAR(255) NOT NULL,recipeName VARCHAR(255) NOT NULL,servingSize VARCHAR(255) NOT NULL,prepTime VARCHAR(255) NOT NULL,calories VARCHAR(255) NOT NULL,fat VARCHAR(255) NOT NULL,carbohydrate VARCHAR(255) NOT NULL,protien VARCHAR(255) NOT NULL,tags VARCHAR(255) NOT NULL,totalTime VARCHAR(255) NOT NULL,dish VARCHAR(255) NOT NULL,ingredient TEXT NOT NULL,expertTips TEXT NOT NULL);''')  # create video table
-        cursor.executemany('INSERT INTO video (ID,recipeImageSrc,videoURL,recipeName,servingSize,prepTime,calories,fat,carbohydrate,protien,tags,totalTime,dish,ingredient,expertTips) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);', processVideoData())  # insert entities
+        cursor.execute("""CREATE TABLE IF NOT EXISTS VIDEO (ID INT PRIMARY KEY NOT NULL,recipeImageSrc VARCHAR(255) NOT NULL,videoURL VARCHAR(255) NOT NULL,recipeName VARCHAR(255) NOT NULL,servingSize VARCHAR(255) NOT NULL,prepTime VARCHAR(255) NOT NULL,calories VARCHAR(255) NOT NULL,fat VARCHAR(255) NOT NULL,carbohydrate VARCHAR(255) NOT NULL,protien VARCHAR(255) NOT NULL,tags VARCHAR(255) NOT NULL,totalTime VARCHAR(255) NOT NULL,dish VARCHAR(255) NOT NULL,ingredient TEXT NOT NULL,expertTips TEXT NOT NULL);""")  # create video table
+        cursor.executemany('INSERT INTO video (ID,recipeImageSrc,videoURL,recipeName,servingSize,prepTime,calories,fat,carbohydrate,protien,tags,totalTime,dish,ingredient,expertTips) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);', process_video_data())  # insert entities
         connection.commit()  # save the data
         logger.info("Video data inserted.")
-        
+
     logger.info("Disconnected the database.")
     connection.close()  # disconnect
+
+
+def get_meals_tags():
+    '''
+    This function is used to get the tags of meals video, so that the users can choose the specific meals they what
+
+    Return:
+        tags of meal
+    '''
+
+    cursor = get_db_connection().cursor()
+    cursor.execute("SELECT tags from video")
+    data = cursor.fetchall()
+    # process the data and get the unique set
+    tags = str(set(sum(list(map(lambda x: x.split(','), [
+               item[key] for item in data for key in item])), [])))
+    return tags
+
+
+def get_info_with_tag(tag):
+    '''
+    This function is used to select the video according to the tag.
+
+    Return the first one
+    '''
+
+    cursor = get_db_connection().cursor()
+    cursor.execute("SELECT * from video WHERE tags LIKE '%"+tag+"%'")
+    data = cursor.fetchone()
+    return str(data)

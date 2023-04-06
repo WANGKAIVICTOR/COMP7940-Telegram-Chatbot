@@ -3,3 +3,5 @@ python-telegram-bot
 openai
 google-api-python-client
 redis
+pymysql
+requests
