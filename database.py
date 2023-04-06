@@ -115,5 +115,6 @@ def get_info_with_tag(tag):
 
     cursor = get_db_connection().cursor()
     cursor.execute("SELECT * from video WHERE tags LIKE '%"+tag+"%'")
-    data = cursor.fetchall()
-    return str(random.choice(data))
+    data = random.choice(cursor.fetchall())
+    data.pop('ID')
+    return str(data)
