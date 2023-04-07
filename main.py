@@ -1,17 +1,17 @@
 import configparser
-import redis
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, Application, CommandHandler, ContextTypes, MessageHandler, CallbackQueryHandler, filters
 from utils import test
 from chatbot import OpenAIBot
 from log import logger
-from database import insert_video_data, get_meals_tags,get_info_with_tag
+from database import insert_video_data, get_meals_tags, get_info_with_tag, get_tv_review_names, write_tv_review, insert_review_data, read_tv_review_with_name
 
 allowed_user_list = ["riverfjs", "victorwangkai", -1001643700527]
 tt = OpenAIBot()
 config = configparser.ConfigParser()
 config.read('config.ini', encoding='utf-8')
 insert_video_data()  # prepare the video data
+insert_review_data()
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -84,11 +84,50 @@ async def cook(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             tags = get_meals_tags()
             await update.message.reply_text("请在命令后输入文字 /cook <keyword>，你可以选择："+tags+"喵~")
         else:
-            await update.message.reply_text(get_info_with_tag(keyword))
+            data = get_info_with_tag(keyword)
+            if data == "":
+                tags = get_meals_tags()
+                await update.message.reply_text("请在命令后输入文字 /cook <keyword>，你可以选择："+tags+"喵~")
+            await update.message.reply_text(data)
     else:
         await update.message.reply_text("对不起，不认识你！ 喵~ 不给用 喵~")
 
-app = ApplicationBuilder().token(token=(config['TELEGRAM']['ACCESS_TOKEN'])).build()
+
+async def read_tv_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send meals video to user."""
+    user = update.message.from_user
+    chatID = update.message.chat.id
+    if user["username"] in allowed_user_list or chatID in allowed_user_list:
+        keyword = " ".join(context.args)
+        if not keyword:
+            tags = get_tv_review_names()
+            await update.message.reply_text("请在命令后输入文字 /tv-review <keyword>，你可以选择："+tags+"喵~")
+        else:
+            data = read_tv_review_with_name(keyword)
+            if data == "":
+                tags = get_tv_review_names()
+                await update.message.reply_text("请在命令后输入文字 /tv-review <keyword>，你可以选择："+tags+"喵~")
+            await update.message.reply_text(data)
+    else:
+        await update.message.reply_text("对不起，不认识你！ 喵~ 不给用 喵~")
+
+
+async def write_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Store the user's TV review"""
+    user = update.message.from_user
+    chatID = update.message.chat.id
+    if user["username"] in allowed_user_list or chatID in allowed_user_list:
+        keyword = " ".join(context.args)
+        if not keyword:
+            await update.message.reply_text("请在命令后输入文字 /write-review <name> <review> 喵~")
+        else:
+            command = keyword.split(" ")
+            await update.message.reply_text(write_tv_review(command[0], command[1]))
+    else:
+        await update.message.reply_text("对不起，不认识你！ 喵~ 不给用 喵~")
+
+app = ApplicationBuilder().token(
+    token=(config['TELEGRAM']['ACCESS_TOKEN'])).build()
 
 app.add_handler(CommandHandler("start", start_command))
 app.add_handler(CommandHandler("help", help_command))
@@ -96,6 +135,8 @@ app.add_handler(CommandHandler("chat", chat))
 app.add_handler(CommandHandler("image", image))
 app.add_handler(CommandHandler("video", ytb))
 app.add_handler(CommandHandler("cook", cook))
+app.add_handler(CommandHandler("tv-review"), read_tv_review)
+app.add_handler(CommandHandler("write-review"), write_review)
 
 
 # app.add_handler(CommandHandler("add", add))
