@@ -144,7 +144,8 @@ async def cook(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             if data == "":
                 tags = get_meals_tags()
                 await update.message.reply_text("请在命令后输入文字 /cook <keyword>，你可以选择："+tags+"喵~")
-            await update.message.reply_text(data)
+            else:
+                await update.message.reply_text(data)
     else:
         await update.message.reply_text("对不起，不认识你！ 喵~ 不给用 喵~")
 

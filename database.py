@@ -89,7 +89,6 @@ def insert_video_data():
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
 
     logger.info("Connected to the database in video part.")
-    logger.info(table_exists(connection, "video"))
 
     if(not table_exists(connection, "video")):
         cursor.execute("""CREATE TABLE IF NOT EXISTS VIDEO (ID INT PRIMARY KEY NOT NULL,recipeImageSrc VARCHAR(255) NOT NULL,videoURL VARCHAR(255) NOT NULL,recipeName VARCHAR(255) NOT NULL,servingSize VARCHAR(255) NOT NULL,prepTime VARCHAR(255) NOT NULL,calories VARCHAR(255) NOT NULL,fat VARCHAR(255) NOT NULL,carbohydrate VARCHAR(255) NOT NULL,protien VARCHAR(255) NOT NULL,tags VARCHAR(255) NOT NULL,totalTime VARCHAR(255) NOT NULL,dish VARCHAR(255) NOT NULL,ingredient TEXT NOT NULL,expertTips TEXT NOT NULL);""")  # create video table
@@ -127,9 +126,10 @@ def get_info_with_tag(tag):
 
     cursor = get_db_connection().cursor()
     cursor.execute("SELECT * from video WHERE tags LIKE '%"+tag+"%'")
-    if(len(cursor.fetchall()) == 0):
+    data = cursor.fetchall()
+    if(len(data) == 0):
         return ""
-    data = random.choice(cursor.fetchall())
+    data = random.choice(data)
     data.pop('ID')
     return str(data)
 
@@ -155,7 +155,6 @@ def process_review_data():
 
 
 def insert_review_data():
-    result = process_review_data()
     connection = get_db_connection()
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
     logger.info("Connected to the database in insert review part.")
@@ -163,7 +162,7 @@ def insert_review_data():
     if(not table_exists(connection, "review")):  # if there is no data in video table, insert
         cursor.execute(
             """CREATE TABLE IF NOT EXISTS review (id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(255) NOT NULL,content TEXT NOT NULL);""")  # create video table
-        cursor.executemany('INSERT INTO review (name, content) VALUES (%s,%s);',result)
+        cursor.executemany('INSERT INTO review (name, content) VALUES (%s,%s);',process_review_data())
         connection.commit()  # save the data
         logger.info("Review data inserted.")
     logger.info("Disconnected the database.")
