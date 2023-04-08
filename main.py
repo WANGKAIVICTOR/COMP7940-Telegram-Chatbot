@@ -1,3 +1,4 @@
+import os
 import logging
 import configparser
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -183,8 +184,12 @@ async def write_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     else:
         await update.message.reply_text("对不起，不认识你！ 喵~ 不给用 喵~")
 
-app = ApplicationBuilder().token(
-    token=(config['TELEGRAM']['ACCESS_TOKEN'])).build()
+if os.getenv('AM_I_IN_A_DOCKER_CONTAINER'):
+    app = ApplicationBuilder().token(
+        token=(os.getenv('ACCESS_TOKEN'))).build()
+else:
+    app = ApplicationBuilder().token(
+        token=(config['TELEGRAM']['ACCESS_TOKEN'])).build()
 
 app.add_handler(CommandHandler("start", start_command))
 app.add_handler(CommandHandler("help", help_command))

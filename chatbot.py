@@ -1,4 +1,5 @@
 # encoding:utf-8
+import os
 import openai
 import time
 import configparser
@@ -12,8 +13,8 @@ config.read('config.ini', encoding='utf-8')
 
 class OpenAIBot():
     def __init__(self):
-        openai.api_key = config["OPENAI"]["KEY"]
-        self.maxtokens = int(config["AIDESC"]["MAX_TOKEN"])
+        openai.api_key = os.getenv('OPENAI_KEY')
+        self.maxtokens = int(os.getenv('MAX_TOKEN'))
 
     def reply(self, query, context=None):
         # acquire reply content
