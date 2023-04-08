@@ -16,7 +16,7 @@ RUN pip install -r requirements.txt
 # Set the environment variables ACCESS_TOKEN , HOST , PASSWORD REDISPORT
 ENV AM_I_IN_A_DOCKER_CONTAINER=True
 ENV ACCESS_TOKEN=2125824444:AAGsVnRkX1W61N8XMQKH5J7bcTxLRpaqzXM
-ENV HOST=z-cdb-6wk2pax5.sql.tencentcdb.com
+ENV HOST=gz-cdb-6wk2pax5.sql.tencentcdb.com
 ENV PORT=63885
 ENV PASSWORD=wangkai2933
 ENV USER=root
