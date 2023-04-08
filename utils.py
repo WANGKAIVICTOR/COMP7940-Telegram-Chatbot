@@ -7,7 +7,8 @@ import googleapiclient.errors
 config = configparser.ConfigParser()
 config.read('config.ini', encoding='utf-8')
 
-def test(text):
+
+def ytb_search(text):
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
     api_service_name = "youtube"
     api_version = "v3"
@@ -20,13 +21,15 @@ def test(text):
         q=text,
     )
     response = request.execute()
+    # print(json.dumps(response))
     try:
-        print("https://youtube.com/v/" + response["items"][0]["id"]["videoId"])
-        return "https://youtube.com/v/" + response["items"][0]["id"]["videoId"]
-    except Exception:
+        ret_dict = {ii["snippet"]["title"]: "https://youtube.com/v/" + ii["id"]["videoId"]
+                    for ii in response["items"]}
+        # print(ret_dict.keys())
+        return ret_dict
+    except Exception as e:
         return "换个关键词吧！"
 
 
-
 if __name__ == "__main__":
-    test("nb")
+    ytb_search("beef")

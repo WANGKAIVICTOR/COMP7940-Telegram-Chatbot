@@ -1,7 +1,15 @@
 import configparser
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, Application, CommandHandler, ContextTypes, MessageHandler, CallbackQueryHandler, filters
-from utils import test
+from telegram.ext import (
+    ApplicationBuilder,
+    Application,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    ConversationHandler,
+    CallbackQueryHandler,
+    filters)
+from utils import ytb_search
 from chatbot import OpenAIBot
 from log import logger
 from database import insert_video_data, get_meals_tags, get_info_with_tag, get_tv_review_names, write_tv_review, insert_review_data, read_tv_review_with_name
@@ -10,8 +18,8 @@ allowed_user_list = ["riverfjs", "victorwangkai", -1001643700527]
 tt = OpenAIBot()
 config = configparser.ConfigParser()
 config.read('config.ini', encoding='utf-8')
-insert_video_data()  # prepare the video data
-insert_review_data()
+# insert_video_data()  # prepare the video data
+# insert_review_data()
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -53,7 +61,7 @@ async def image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("对不起，不认识你！ 喵~ 不给用 喵~")
 
 
-async def ytb(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /image is issued."""
     user = update.message.from_user
     chatID = update.message.chat.id
@@ -62,9 +70,39 @@ async def ytb(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not keyword:
             await update.message.reply_text("请在命令后输入文字 /video <keyword>，喵~")
         else:
-            await update.message.reply_text(test(keyword))
+            ret_dict = ytb_search(keyword)
+            if ret_dict == "换个关键词吧！":
+                await update.message.reply_text("换个关键词吧！")
+                return
+            # print(ret_list)
+            keyboard = [[InlineKeyboardButton(
+                "{}".format(idx+1), callback_data="{}".format(ret)) for idx, ret in enumerate(ret_dict.values())]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            reply_text = ""
+            for idx, title in enumerate((ret_dict.keys())):
+                reply_text += "{}. {}\n".format(idx+1, title)
+            await update.message.reply_text(reply_text+"\nClick the number below👇", reply_markup=reply_markup)
     else:
         await update.message.reply_text("对不起，不认识你！ 喵~ 不给用 喵~")
+
+
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Parses the CallbackQuery and updates the message text."""
+    query = update.callback_query
+    # CallbackQueries need to be answered, even if no notification to the user is needed
+    # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
+    if query.data == "end the query":
+        await query.answer()
+        await query.delete_message()
+    else:
+        await query.answer()
+        keyboard = [
+            [
+                InlineKeyboardButton("❌ CLOSE", callback_data="end the query"),
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await query.message.reply_text(query.data, reply_markup=reply_markup)
 
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -133,10 +171,13 @@ app.add_handler(CommandHandler("start", start_command))
 app.add_handler(CommandHandler("help", help_command))
 app.add_handler(CommandHandler("chat", chat))
 app.add_handler(CommandHandler("image", image))
-app.add_handler(CommandHandler("video", ytb))
+
+app.add_handler(CommandHandler("video", video))
+app.add_handler(CallbackQueryHandler(button))
+
 app.add_handler(CommandHandler("cook", cook))
-app.add_handler(CommandHandler("tv-review"), read_tv_review)
-app.add_handler(CommandHandler("write-review"), write_review)
+app.add_handler(CommandHandler("readreview", read_tv_review))
+app.add_handler(CommandHandler("writereview", write_review))
 
 
 # app.add_handler(CommandHandler("add", add))
