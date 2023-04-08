@@ -174,25 +174,28 @@ def read_tv_review_with_name(name):
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
     cursor = get_db_connection().cursor()
     cursor.execute("SELECT * from review WHERE name LIKE '%"+name+"%'")
-    if(len(cursor.fetchall()) == 0):
+    data = cursor.fetchall()
+    if(len(data) == 0):
         return ""
-    data = random.choice(cursor.fetchall())
-    data.pop('ID')
-    return str(data)
+    data = random.choice(data)
+    data.pop('id')
+    return data['name']+"评论: "+data['content']
 
 
 def write_tv_review(name, content):
     connection = get_db_connection()
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
-    cursor.executemany(
-        'INSERT INTO REVIEW (name, content) VALUES ("%s","%s");', set([name, content]))
+    logger.info([tuple([name, content])])
+    cursor.executemany('INSERT INTO review (name, content) VALUES (%s,%s);',([tuple([name, content])]))
     connection.commit()  # save the data
     connection.close()  # disconnect
-    return "Success!"
+    return "添加成功!"
 
 
 def get_tv_review_names():
     cursor = get_db_connection().cursor()
     cursor.execute("SELECT name from REVIEW")
     data = cursor.fetchall()
-    return set(data)
+    names = str(set(sum(list(map(lambda x: x.split(','), [
+               item[key] for item in data for key in item])), [])))
+    return names

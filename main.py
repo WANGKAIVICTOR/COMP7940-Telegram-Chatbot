@@ -159,12 +159,12 @@ async def read_tv_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         keyword = " ".join(context.args)
         if not keyword:
             tags = get_tv_review_names()
-            await update.message.reply_text("请在命令后输入文字 /tv-review <keyword>，你可以选择："+tags+"喵~")
+            await update.message.reply_text("请在命令后输入文字 /readreview <keyword>，你可以选择："+tags+"喵~")
         else:
             data = read_tv_review_with_name(keyword)
             if data == "":
                 tags = get_tv_review_names()
-                await update.message.reply_text("请在命令后输入文字 /tv-review <keyword>，你可以选择："+tags+"喵~")
+                await update.message.reply_text("请在命令后输入文字 /readreview <keyword>，你可以选择："+tags+"喵~")
             await update.message.reply_text(data)
     else:
         await update.message.reply_text("对不起，不认识你！ 喵~ 不给用 喵~")
@@ -177,7 +177,7 @@ async def write_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     if user["username"] in allowed_user_list or chatID in allowed_user_list:
         keyword = " ".join(context.args)
         if not keyword:
-            await update.message.reply_text("请在命令后输入文字 /write-review <name> <review> 喵~")
+            await update.message.reply_text("请在命令后输入文字 /writereview <name> <review> 喵~")
         else:
             command = keyword.split(" ")
             await update.message.reply_text(write_tv_review(command[0], command[1]))
