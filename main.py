@@ -26,8 +26,8 @@ allowed_user_list = ["riverfjs", "victorwangkai", -1001643700527]
 tt = OpenAIBot()
 config = configparser.ConfigParser()
 config.read('config.ini', encoding='utf-8')
-# insert_video_data()  # prepare the video data
-# insert_review_data()
+insert_video_data()  # prepare the video data
+insert_review_data()
 
 # Enable logging
 
