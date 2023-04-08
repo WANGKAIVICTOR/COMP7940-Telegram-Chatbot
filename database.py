@@ -5,6 +5,8 @@ from log import logger
 import random
 from selenium import webdriver
 from lxml import etree
+import emoji
+import re
 
 
 def get_db_connection():
@@ -30,7 +32,8 @@ def table_exists(connection, table_name):
     sql = "show tables;"
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
     cursor.execute(sql)
-    tables = [cursor.fetchall()]
+    tables = cursor.fetchall()
+    tables = [item[key] for item in tables for key in item] # get all table names
     if table_name in tables:
         return True
     return False
@@ -86,8 +89,9 @@ def insert_video_data():
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
 
     logger.info("Connected to the database in video part.")
+    logger.info(table_exists(connection, "video"))
 
-    if(not table_exists(connection, "REVIEW")):
+    if(not table_exists(connection, "video")):
         cursor.execute("""CREATE TABLE IF NOT EXISTS VIDEO (ID INT PRIMARY KEY NOT NULL,recipeImageSrc VARCHAR(255) NOT NULL,videoURL VARCHAR(255) NOT NULL,recipeName VARCHAR(255) NOT NULL,servingSize VARCHAR(255) NOT NULL,prepTime VARCHAR(255) NOT NULL,calories VARCHAR(255) NOT NULL,fat VARCHAR(255) NOT NULL,carbohydrate VARCHAR(255) NOT NULL,protien VARCHAR(255) NOT NULL,tags VARCHAR(255) NOT NULL,totalTime VARCHAR(255) NOT NULL,dish VARCHAR(255) NOT NULL,ingredient TEXT NOT NULL,expertTips TEXT NOT NULL);""")  # create video table
         cursor.executemany('INSERT INTO video (ID,recipeImageSrc,videoURL,recipeName,servingSize,prepTime,calories,fat,carbohydrate,protien,tags,totalTime,dish,ingredient,expertTips) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);', process_video_data())  # insert entities
         connection.commit()  # save the data
@@ -132,8 +136,7 @@ def get_info_with_tag(tag):
 
 def process_review_data():
     urls = {"潜伏": "3314870", "大宅门": "2181930", "红色": "25966028", "红楼梦": "1864810", "琅琊榜": "25754848",
-            "武林外传": "3882715", "黎明之前": "4894070", "战长沙": "20258941", "西游记": "2156663", "士兵突击": "2154096",
-            "走向共和": "1441794", "记忆的证明": "2333726"}
+            "武林外传": "3882715", "黎明之前": "4894070", "战长沙": "20258941", "西游记": "2156663", "士兵突击": "2154096"}
     result = []
     for key in urls.keys():
         driver = webdriver.Chrome()  # create a chrome obj
@@ -143,20 +146,24 @@ def process_review_data():
         html = etree.HTML(page_source)
         data = html.xpath('//span[@class="short"]/text()')
         for d in data:
-            result.append(tuple([key, d]))
+            d.replace('\n', '').replace('\r', '')
+            text = emoji.demojize(d) # delete emoji
+            result.append(tuple([key, re.sub(':\S+?:', ' ', text)]))
         driver.quit()  # close the  broswer
+        
     return result
 
 
 def insert_review_data():
+    result = process_review_data()
     connection = get_db_connection()
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
     logger.info("Connected to the database in insert review part.")
-    if(not table_exists(connection, "REVIEW")):  # if there is no data in video table, insert
+
+    if(not table_exists(connection, "review")):  # if there is no data in video table, insert
         cursor.execute(
-            """CREATE TABLE IF NOT EXISTS REVIEW (id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(255) NOT NULL, content TEXT NOT NULL;""")  # create video table
-        cursor.executemany('INSERT INTO REVIEW (name, content) VALUES (%s,%s);',
-                           process_review_data())  # insert entities
+            """CREATE TABLE IF NOT EXISTS review (id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(255) NOT NULL,content TEXT NOT NULL);""")  # create video table
+        cursor.executemany('INSERT INTO review (name, content) VALUES (%s,%s);',result)
         connection.commit()  # save the data
         logger.info("Review data inserted.")
     logger.info("Disconnected the database.")
