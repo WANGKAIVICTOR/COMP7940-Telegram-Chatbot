@@ -7,6 +7,7 @@ from selenium import webdriver
 from lxml import etree
 import emoji
 import re
+import os
 
 
 def get_db_connection():
@@ -20,8 +21,12 @@ def get_db_connection():
     logger.info("Connecting databse")
     config = configparser.ConfigParser()
     config.read('config.ini', encoding='utf-8')
-    connection = pymysql.connect(host=config['SQL']['HOST'], user=config['SQL']['USER'], password=config['SQL']['PASSWORD'], port=int(
-        config['SQL']['PORT']), autocommit=True, cursorclass=pymysql.cursors.DictCursor)
+    if os.getenv('AM_I_IN_A_DOCKER_CONTAINER'):
+        connection = pymysql.connect(host=os.getenv('HOST'), user=os.getenv('USER'), password=os.getenv('PASSWORD'), port=int(
+            os.getenv('PORT')), autocommit=True, cursorclass=pymysql.cursors.DictCursor)
+    else:
+        connection = pymysql.connect(host=config['SQL']['HOST'], user=config['SQL']['USER'], password=config['SQL']['PASSWORD'], port=int(
+            config['SQL']['PORT']), autocommit=True, cursorclass=pymysql.cursors.DictCursor)
     connection.cursor().execute('CREATE DATABASE IF NOT EXISTS %s;' % "telegram_chatbot")
     connection.select_db("telegram_chatbot")
     logger.info("Database connected")
@@ -33,7 +38,8 @@ def table_exists(connection, table_name):
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
     cursor.execute(sql)
     tables = cursor.fetchall()
-    tables = [item[key] for item in tables for key in item] # get all table names
+    tables = [item[key]
+              for item in tables for key in item]  # get all table names
     if table_name in tables:
         return True
     return False
@@ -147,10 +153,10 @@ def process_review_data():
         data = html.xpath('//span[@class="short"]/text()')
         for d in data:
             d.replace('\n', '').replace('\r', '')
-            text = emoji.demojize(d) # delete emoji
+            text = emoji.demojize(d)  # delete emoji
             result.append(tuple([key, re.sub(':\S+?:', ' ', text)]))
         driver.quit()  # close the  broswer
-        
+
     return result
 
 
@@ -162,7 +168,8 @@ def insert_review_data():
     if(not table_exists(connection, "review")):  # if there is no data in video table, insert
         cursor.execute(
             """CREATE TABLE IF NOT EXISTS review (id INT AUTO_INCREMENT PRIMARY KEY,name VARCHAR(255) NOT NULL,content TEXT NOT NULL);""")  # create video table
-        cursor.executemany('INSERT INTO review (name, content) VALUES (%s,%s);',process_review_data())
+        cursor.executemany(
+            'INSERT INTO review (name, content) VALUES (%s,%s);', process_review_data())
         connection.commit()  # save the data
         logger.info("Review data inserted.")
     logger.info("Disconnected the database.")
@@ -186,7 +193,8 @@ def write_tv_review(name, content):
     connection = get_db_connection()
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
     logger.info([tuple([name, content])])
-    cursor.executemany('INSERT INTO review (name, content) VALUES (%s,%s);',([tuple([name, content])]))
+    cursor.executemany('INSERT INTO review (name, content) VALUES (%s,%s);', ([
+                       tuple([name, content])]))
     connection.commit()  # save the data
     connection.close()  # disconnect
     return "添加成功!"
@@ -197,5 +205,5 @@ def get_tv_review_names():
     cursor.execute("SELECT name from REVIEW")
     data = cursor.fetchall()
     names = str(set(sum(list(map(lambda x: x.split(','), [
-               item[key] for item in data for key in item])), [])))
+        item[key] for item in data for key in item])), [])))
     return names

@@ -13,8 +13,12 @@ config.read('config.ini', encoding='utf-8')
 
 class OpenAIBot():
     def __init__(self):
-        openai.api_key = os.getenv('OPENAI_KEY')
-        self.maxtokens = int(os.getenv('MAX_TOKEN'))
+        if os.getenv('AM_I_IN_A_DOCKER_CONTAINER'):
+            openai.api_key = os.getenv('OPENAI_KEY')
+            self.maxtokens = int(os.getenv('MAX_TOKEN'))
+        else:
+            openai.api_key = config["OPENAI"]["KEY"]
+            self.maxtokens = int(config["AIDESC"]["MAX_TOKEN"])
 
     def reply(self, query, context=None):
         # acquire reply content
@@ -101,9 +105,15 @@ class Session(object):
         :return: query content with conversaction
         '''
         # prompt = config["AIDESC"]["CHARACTER_DESC"]
-        prompt = [
-            {"role": "system", "content": config["AIDESC"]["CHARACTER_DESC"]},
-        ]
+        if os.getenv('AM_I_IN_A_DOCKER_CONTAINER'):
+            prompt = [
+                {"role": "system", "content": os.getenv("CHARACTER_DESC")},
+            ]
+        else:
+            prompt = [
+                {"role": "system",
+                    "content": config["AIDESC"]["CHARACTER_DESC"]},
+            ]
         session = user_session.get(user_id, None)
         if session:
             for conversation in session:
@@ -126,7 +136,10 @@ class Session(object):
 
     @staticmethod
     def save_session(query, answer, user_id):
-        max_tokens = int(config["AIDESC"]["MAX_TOKEN"])
+        if os.getenv('AM_I_IN_A_DOCKER_CONTAINER'):
+            max_tokens = int(os.getenv("MAX_TOKEN"))
+        else:
+            max_tokens = int(config["AIDESC"]["MAX_TOKEN"])
         if not max_tokens:
             # default 3000
             max_tokens = 1000
