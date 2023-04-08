@@ -1,3 +1,4 @@
+import logging
 import configparser
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
@@ -11,8 +12,15 @@ from telegram.ext import (
     filters)
 from utils import ytb_search
 from chatbot import OpenAIBot
-from log import logger
-from database import insert_video_data, get_meals_tags, get_info_with_tag, get_tv_review_names, write_tv_review, insert_review_data, read_tv_review_with_name
+# from log import logger
+from database import (
+    insert_video_data,
+    get_meals_tags,
+    get_info_with_tag,
+    get_tv_review_names,
+    write_tv_review,
+    insert_review_data,
+    read_tv_review_with_name)
 
 allowed_user_list = ["riverfjs", "victorwangkai", -1001643700527]
 tt = OpenAIBot()
@@ -21,9 +29,18 @@ config.read('config.ini', encoding='utf-8')
 # insert_video_data()  # prepare the video data
 # insert_review_data()
 
+# Enable logging
+
+logging.basicConfig(
+    format="[%(levelname)s][%(asctime)s][%(filename)s:%(lineno)d] - %(message)s", level=logging.INFO, datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
+    user = update.message.from_user
+    logger.info("User %s started the conversation.", user.first_name)
     await update.message.reply_text("你好, {}, 请选择左下角菜单开始使用！喵~".format(update.message.from_user["first_name"]))
 
 
@@ -65,6 +82,7 @@ async def video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /image is issued."""
     user = update.message.from_user
     chatID = update.message.chat.id
+    logger.info("User %s started the video search.", user.first_name)
     if user["username"] in allowed_user_list or chatID in allowed_user_list:
         keyword = " ".join(context.args)
         if not keyword:
