@@ -180,7 +180,10 @@ async def write_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             await update.message.reply_text("请在命令后输入文字 /writereview <name> <review> 喵~")
         else:
             command = keyword.split(" ")
-            await update.message.reply_text(write_tv_review(command[0], command[1]))
+            if(len(command != 2)):
+                await update.message.reply_text("请在命令后输入文字 /writereview <name> <review> 喵~")
+            else:
+                await update.message.reply_text(write_tv_review(command[0], command[1]))
     else:
         await update.message.reply_text("对不起，不认识你！ 喵~ 不给用 喵~")
 
