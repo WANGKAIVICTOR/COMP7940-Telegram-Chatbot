@@ -12,7 +12,10 @@ def ytb_search(text):
     os.environ["OAUTHLIB_INSECURE_TRANSPORT"] = "1"
     api_service_name = "youtube"
     api_version = "v3"
-    developerKey = config["YOUTUBE"]["DEVELOPER_KEY"]
+    if os.getenv('AM_I_IN_A_DOCKER_CONTAINER'):
+        developerKey = os.getenv('DEVELOPER_KEY')
+    else:
+        developerKey = config["YOUTUBE"]["DEVELOPER_KEY"]
 
     youtube = googleapiclient.discovery.build(
         api_service_name, api_version, developerKey=developerKey)
