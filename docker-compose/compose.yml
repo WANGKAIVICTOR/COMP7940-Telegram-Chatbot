@@ -7,10 +7,18 @@ services:
     image: 22405925chatbot.azurecr.io/chatbot
     command: python main.py
     restart: always
+    environment:
+      HOST: db
+      PORT: 3306
+      PASSWORD: wangkai2933
+      USER: root
+      DBNAME: telegram_chatbot
     depends_on:
-      mysql:
+      db:
         condition: service_healthy
-  mysql:
+    ports:
+      - "8000:80"
+  db:
     image: mysql:5.7
     container_name: mysql
     command:
@@ -21,10 +29,12 @@ services:
       ]
     restart: always
     environment:
-      MYSQL_DATABASE: telegram_chatbot
       MYSQL_ROOT_PASSWORD: wangkai2933
-    ports:
-      - 33307:3306
+      MYSQL_DATABASE: telegram_chatbot
+      MYSQL_USER: river
+      MYSQL_PASSWORD: wangkai2933
+    # ports:
+    #   - 33061:3306
     healthcheck:
       test: "/usr/bin/mysql --user=root --password=$$MYSQL_ROOT_PASSWORD --execute \"SHOW DATABASES;\""
       interval: 2s
