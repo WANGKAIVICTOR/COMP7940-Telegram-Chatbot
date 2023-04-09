@@ -9,6 +9,7 @@ from lxml import etree
 import emoji
 import re
 import os
+from tqdm import tqdm
 
 
 def get_db_connection():
@@ -159,7 +160,10 @@ def process_review_data():
     urls = {"潜伏": "3314870", "大宅门": "2181930", "红色": "25966028", "红楼梦": "1864810", "琅琊榜": "25754848",
             "武林外传": "3882715", "黎明之前": "4894070", "战长沙": "20258941", "西游记": "2156663", "士兵突击": "2154096"}
     result = []
-    for key in urls.keys():
+
+    pbar = tqdm(urls.keys())
+    for key in pbar:
+        pbar.set_description("Processing %s" % (key+" review"))
         driver = webdriver.Chrome(
             options=set_chrome_options())  # create a chrome obj
         driver.get("https://movie.douban.com/subject/" +
