@@ -31,8 +31,8 @@ tt = OpenAIBot()
 config = configparser.ConfigParser()
 config.read('config.ini', encoding='utf-8')
 initialize_activate_table()
-# insert_video_data()  # prepare the video data
-# insert_review_data()
+insert_video_data()  # prepare the video data
+insert_review_data()
 
 # Enable logging
 
