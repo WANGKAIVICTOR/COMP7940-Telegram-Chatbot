@@ -4,6 +4,7 @@ services:
     build:
       context: ../ # 指定dockerfile文件的所在路径  
       dockerfile: Dockerfile
+    image: 22405925chatbot.azurecr.io/chatbot
     command: python main.py
     restart: always
     depends_on:
