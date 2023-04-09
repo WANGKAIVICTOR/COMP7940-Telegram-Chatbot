@@ -297,6 +297,3 @@ def get_key(usernmae):
     cursor.execute("""SELECT times FROM user WHERE name=%s;""",(usernmae))
     times = cursor.fetchone()["times"]
     return key,times
-
-add_user("tester","fb6b5a2dbc54156c87e393bca7497f35")
-print(get_key("riverfjs"))
