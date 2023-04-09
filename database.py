@@ -10,6 +10,9 @@ import emoji
 import re
 import os
 from tqdm import tqdm
+import hashlib
+import random
+import time
 
 
 def get_db_connection():
@@ -234,3 +237,66 @@ def get_tv_review_names():
     names = str(set(sum(list(map(lambda x: x.split(','), [
         item[key] for item in data for key in item])), [])))
     return names
+
+def initialize_activate_table():
+    connection = get_db_connection()
+    cursor = connection.cursor()  # create the cursor to execute the sql sentence
+    logger.info("Connected to the database in initialize activate table part.")
+    cursor.execute("""CREATE TABLE IF NOT EXISTS user (id INT AUTO_INCREMENT PRIMARY KEY,is_admin INT NOT NULL,name VARCHAR(255) NOT NULL,activate_key TEXT NULL,times INT NULL);""")
+    cursor.executemany('INSERT INTO user (is_admin, name, activate_key, times) VALUES (%s,%s,%s,%s);', [(1,"riverfjs",generate_activate_key(),3),(1,"victorwangkai",generate_activate_key(),3)])
+    connection.commit()  # save the data
+    logger.info("initialized the admin info")
+    connection.close()  # disconnect
+
+def generate_activate_key():
+    return hashlib.md5(str(str(random.random())+str(time.time())).encode()).hexdigest()
+
+def add_user(username, key):
+    connection = get_db_connection()
+    cursor = connection.cursor()  # create the cursor to execute the sql sentence
+    cursor.execute("""SELECT name,activate_key,times FROM user WHERE activate_key=%s;""",(key))
+    data = cursor.fetchone()
+
+    if(data == None): # activate_key invalid
+        return False, "invalid activate key"
+    
+    try:
+        cursor.execute("""INSERT INTO user(is_admin, name) VALUES('%s','%s');""" % (0,username))
+        connection.commit()  # save the data
+    except Exception as e:
+        return False,e
+    times =  data['times'] - 1
+    if(times!=0):
+        cursor.execute("""UPDATE user SET times=%s WHERE activate_key=%s;""",(times, key))
+        connection.commit()  # save the data
+    else:
+        cursor.execute("""UPDATE user SET activate_key=%s,times=%s WHERE name=%s""",(generate_activate_key(),3,data['name']))
+        connection.commit()  # save the data
+    return True
+
+
+def check_user(usernmae, check_admin=False):
+    connection = get_db_connection()
+    cursor = connection.cursor()  # create the cursor to execute the sql sentence
+    if check_admin:
+        cursor.execute("""SELECT * FROM user WHERE name=%s AND is_admin=%s;""",(usernmae,1))
+        if(len(cursor.fetchall())==0):
+            return False
+        return True
+    else:
+        cursor.execute("""SELECT * FROM user WHERE name=%s;""",(usernmae))
+        if(len(cursor.fetchall())==0):
+            return False
+        return True
+
+def get_key(usernmae):
+    connection = get_db_connection()
+    cursor = connection.cursor()  # create the cursor to execute the sql sentence
+    cursor.execute("""SELECT activate_key FROM user WHERE name=%s;""",(usernmae))
+    key = cursor.fetchone()["activate_key"]
+    cursor.execute("""SELECT times FROM user WHERE name=%s;""",(usernmae))
+    times = cursor.fetchone()["times"]
+    return key,times
+
+add_user("tester","fb6b5a2dbc54156c87e393bca7497f35")
+print(get_key("riverfjs"))
