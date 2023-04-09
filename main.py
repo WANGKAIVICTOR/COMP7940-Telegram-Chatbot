@@ -30,7 +30,7 @@ from database import (
 tt = OpenAIBot()
 config = configparser.ConfigParser()
 config.read('config.ini', encoding='utf-8')
-# initialize_activate_table()
+initialize_activate_table()
 # insert_video_data()  # prepare the video data
 # insert_review_data()
 
@@ -52,10 +52,10 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 async def activate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Activate account by activation code"""
     user = update.message.from_user
-    msg = ""
+    msg = "not activated."
     STATES = {True: "Activation succeed, please start using the bot according to the menu.",
               False: "Activation failed, please contact the admin for help. {}".format(msg)}
-    if check_user(user.id):
+    if not check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
             await update.message.reply_text("Please add keywords after command /activate <keyword>，喵~")

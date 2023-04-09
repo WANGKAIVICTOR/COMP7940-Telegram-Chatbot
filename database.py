@@ -280,7 +280,7 @@ def add_user(username, key):
         cursor.execute("""UPDATE user SET activate_key=%s,times=%s WHERE name=%s""",
                        (generate_activate_key(), 3, data['name']))
         connection.commit()  # save the data
-    return True
+    return True, ""
 
 
 def check_user(usernmae, check_admin=False):
