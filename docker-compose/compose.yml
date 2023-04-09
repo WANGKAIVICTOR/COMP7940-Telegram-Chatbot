@@ -1,0 +1,19 @@
+version: '3'
+services:
+  chatbot:
+    build:
+      context: ../ # 指定dockerfile文件的所在路径  
+      dockerfile: Dockerfile
+    command: python main.py
+    restart: always
+    depends_on:
+      - mysql
+  mysql:
+    image: mysql:5.7
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: telegram_chatbot
+      MYSQL_ROOT_PASSWORD: wangkai2933
+    ports:
+      - 33307:3306
