@@ -245,7 +245,7 @@ def initialize_activate_table():
     logger.info("Connected to the database in initialize activate table part.")
     cursor.execute("""CREATE TABLE IF NOT EXISTS user (id INT AUTO_INCREMENT PRIMARY KEY,is_admin INT NOT NULL,name VARCHAR(255) NOT NULL,activate_key TEXT NULL,times INT NULL);""")
     cursor.executemany('INSERT INTO user (is_admin, name, activate_key, times) VALUES (%s,%s,%s,%s);', [
-                       (1, "riverfjs", generate_activate_key(), 3), (1, "victorwangkai", generate_activate_key(), 3)])
+                       (1, "708072806", generate_activate_key(), 3), (1, "5949216364", generate_activate_key(), 3)])
     connection.commit()  # save the data
     logger.info("initialized the admin info")
     connection.close()  # disconnect

@@ -27,13 +27,12 @@ from database import (
     check_user,
     get_key)
 
-allowed_user_list = ["riverfjs", "victorwangkai", -1001643700527]
 tt = OpenAIBot()
 config = configparser.ConfigParser()
 config.read('config.ini', encoding='utf-8')
-initialize_activate_table()
-insert_video_data()  # prepare the video data
-insert_review_data()
+# initialize_activate_table()
+# insert_video_data()  # prepare the video data
+# insert_review_data()
 
 # Enable logging
 
@@ -52,16 +51,16 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 async def activate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Activate account by activation code"""
-    user = update.message.from_user["username"]
+    user = update.message.from_user
     msg = ""
     STATES = {True: "Activation succeed, please start using the bot according to the menu.",
               False: "Activation failed, please contact the admin for help. {}".format(msg)}
-    if check_user(user):
+    if check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
             await update.message.reply_text("Please add keywords after command /activate <keyword>，喵~")
         else:
-            flag, msg = add_user(user, keyword)
+            flag, msg = add_user(user.id, keyword)
             await update.message.reply_text(f"{STATES[flag]}, 喵~")
     else:
         await update.message.reply_text(f"{STATES[True]}, 喵~")
@@ -69,12 +68,12 @@ async def activate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def generate_key(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Generate activation code by admin"""
-    user = update.message.from_user["username"]
+    user = update.message.from_user
 
-    if check_user(user, check_admin=True):
-        activation_code, times = get_key(user)
+    if check_user(user.id, check_admin=True):
+        activation_code, times = get_key(user.id)
         await update.message.reply_text(
-            f"Hello {user}, your activation code is {activation_code}, with {times} times remain.")
+            f"Hello {user.first_name}, your activation code is {activation_code}, with {times} times remain.")
     else:
         await update.message.reply_text("Operation not permitted, 喵~")
 
@@ -83,12 +82,12 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /chat is issued."""
     user = update.message.from_user
     chatID = update.message.chat.id
-    if check_user(user):
+    if check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
             await update.message.reply_text("Please add keywords after command /chat <keyword>，喵~")
         else:
-            await update.message.reply_text(tt.reply(query=keyword, context={"user_id": user["username"], "type": "TEXT"}))
+            await update.message.reply_text(tt.reply(query=keyword, context={"user_id": user.id, "type": "TEXT"}))
     else:
         await update.message.reply_text("Please activate your account！ 喵~ 不给用 喵~")
 
@@ -98,12 +97,12 @@ async def image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
     user = update.message.from_user
     chatID = update.message.chat.id
-    if check_user(user):
+    if check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
             await update.message.reply_text("Please add keywords after command /image <keyword>，喵~")
         else:
-            await update.message.reply_photo(tt.reply(query=keyword, context={"user_id": user["username"], "type": "IMAGE_CREATE"}))
+            await update.message.reply_photo(tt.reply(query=keyword, context={"user_id": user.id, "type": "IMAGE_CREATE"}))
     else:
         await update.message.reply_text("Please activate your account！ 喵~ 不给用 喵~")
 
@@ -113,7 +112,7 @@ async def video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user = update.message.from_user
     chatID = update.message.chat.id
     logger.info("User %s started the video search.", user.first_name)
-    if check_user(user):
+    if check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
             await update.message.reply_text("Please add keywords after command /video <keyword>，喵~")
@@ -129,7 +128,7 @@ async def video(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             reply_text = ""
             for idx, title in enumerate((ret_dict.keys())):
                 reply_text += "{}. {}\n".format(idx+1, title)
-            await update.message.reply_text(reply_text+"\nClick the number below👇", reply_markup=reply_markup)
+            await update.message.reply_text(reply_text+"\nClick the number below. 👇", reply_markup=reply_markup)
     else:
         await update.message.reply_text("Please activate your account！ 喵~ 不给用 喵~")
 
@@ -164,7 +163,7 @@ async def cook(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send meals video to user."""
     user = update.message.from_user
     chatID = update.message.chat.id
-    if check_user(user):
+    if check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
             tags = get_meals_tags()
@@ -184,7 +183,7 @@ async def read_tv_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """Send meals video to user."""
     user = update.message.from_user
     chatID = update.message.chat.id
-    if check_user(user):
+    if check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
             tags = get_tv_review_names()
@@ -203,7 +202,7 @@ async def write_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Store the user's TV review"""
     user = update.message.from_user
     chatID = update.message.chat.id
-    if check_user(user):
+    if check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
             await update.message.reply_text("Please add keywords after command /writereview <name> <review> 喵~")
