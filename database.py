@@ -4,6 +4,7 @@ import configparser
 from log import logger
 import random
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from lxml import etree
 import emoji
 import re
@@ -96,9 +97,9 @@ def insert_video_data():
 
     logger.info("Connected to the database in video part.")
 
-    if(not table_exists(connection, "video")):
+    if(not table_exists(connection, "VIDEO")):
         cursor.execute("""CREATE TABLE IF NOT EXISTS VIDEO (ID INT PRIMARY KEY NOT NULL,recipeImageSrc VARCHAR(255) NOT NULL,videoURL VARCHAR(255) NOT NULL,recipeName VARCHAR(255) NOT NULL,servingSize VARCHAR(255) NOT NULL,prepTime VARCHAR(255) NOT NULL,calories VARCHAR(255) NOT NULL,fat VARCHAR(255) NOT NULL,carbohydrate VARCHAR(255) NOT NULL,protien VARCHAR(255) NOT NULL,tags VARCHAR(255) NOT NULL,totalTime VARCHAR(255) NOT NULL,dish VARCHAR(255) NOT NULL,ingredient TEXT NOT NULL,expertTips TEXT NOT NULL);""")  # create video table
-        cursor.executemany('INSERT INTO video (ID,recipeImageSrc,videoURL,recipeName,servingSize,prepTime,calories,fat,carbohydrate,protien,tags,totalTime,dish,ingredient,expertTips) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);', process_video_data())  # insert entities
+        cursor.executemany('INSERT INTO VIDEO (ID,recipeImageSrc,videoURL,recipeName,servingSize,prepTime,calories,fat,carbohydrate,protien,tags,totalTime,dish,ingredient,expertTips) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);', process_video_data())  # insert entities
         connection.commit()  # save the data
         logger.info("Video data inserted.")
 
@@ -115,7 +116,7 @@ def get_meals_tags():
     '''
 
     cursor = get_db_connection().cursor()
-    cursor.execute("SELECT tags from video")
+    cursor.execute("SELECT tags from VIDEO")
     data = cursor.fetchall()
     # process the data and get the unique set
     tags = str(set(sum(list(map(lambda x: x.split(','), [
@@ -131,7 +132,7 @@ def get_info_with_tag(tag):
     '''
 
     cursor = get_db_connection().cursor()
-    cursor.execute("SELECT * from video WHERE tags LIKE '%"+tag+"%'")
+    cursor.execute("SELECT * from VIDEO WHERE tags LIKE '%"+tag+"%'")
     data = cursor.fetchall()
     if(len(data) == 0):
         return ""
@@ -140,12 +141,27 @@ def get_info_with_tag(tag):
     return str(data)
 
 
+def set_chrome_options() -> None:
+    """Sets chrome options for Selenium.
+    Chrome options for headless browser is enabled.
+    """
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_prefs = {}
+    chrome_options.experimental_options["prefs"] = chrome_prefs
+    chrome_prefs["profile.default_content_settings"] = {"images": 2}
+    return chrome_options
+
+
 def process_review_data():
     urls = {"潜伏": "3314870", "大宅门": "2181930", "红色": "25966028", "红楼梦": "1864810", "琅琊榜": "25754848",
             "武林外传": "3882715", "黎明之前": "4894070", "战长沙": "20258941", "西游记": "2156663", "士兵突击": "2154096"}
     result = []
     for key in urls.keys():
-        driver = webdriver.Chrome()  # create a chrome obj
+        driver = webdriver.Chrome(
+            options=set_chrome_options())  # create a chrome obj
         driver.get("https://movie.douban.com/subject/" +
                    urls[key]+"/comments?status=P")  # open the website
         page_source = driver.page_source  # get the source code
