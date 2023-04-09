@@ -55,7 +55,7 @@ async def activate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     msg = ""
     STATES = {True: "Activation succeed, please start using the bot according to the menu.",
               False: "Activation failed, please contact the admin for help. {}".format(msg)}
-    if check_user(user.id):
+    if not check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
             await update.message.reply_text("Please add keywords after command /activate <keyword>，喵~")
@@ -63,7 +63,7 @@ async def activate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             flag, msg = add_user(user.id, keyword)
             await update.message.reply_text(f"{STATES[flag]}, 喵~")
     else:
-        await update.message.reply_text(f"{STATES[True]}, 喵~")
+        await update.message.reply_text(f"{STATES[flag]}, 喵~")
 
 
 async def generate_key(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
