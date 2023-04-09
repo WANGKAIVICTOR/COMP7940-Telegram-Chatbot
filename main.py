@@ -63,7 +63,7 @@ async def activate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             flag, msg = add_user(user.id, keyword)
             await update.message.reply_text(f"{STATES[flag]}, 喵~")
     else:
-        await update.message.reply_text(f"{STATES[True]}, 喵~")
+        await update.message.reply_text(f"{STATES[flag]}, 喵~")
 
 
 async def generate_key(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
