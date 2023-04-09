@@ -22,12 +22,19 @@ def get_db_connection():
     logger.info("Connecting databse")
     config = configparser.ConfigParser()
     config.read('config.ini', encoding='utf-8')
-    if os.getenv('AM_I_IN_A_DOCKER_CONTAINER'):
-        connection = pymysql.connect(host=os.getenv('HOST'), user=os.getenv('USER'), password=os.getenv('PASSWORD'), port=int(
-            os.getenv('PORT')), autocommit=True, cursorclass=pymysql.cursors.DictCursor)
-    else:
-        connection = pymysql.connect(host=config['SQL']['HOST'], user=config['SQL']['USER'], password=config['SQL']['PASSWORD'], port=int(
-            config['SQL']['PORT']), autocommit=True, cursorclass=pymysql.cursors.DictCursor)
+    while True:
+        try:
+            if os.getenv('AM_I_IN_A_DOCKER_CONTAINER'):
+                connection = pymysql.connect(host=os.getenv('HOST'), user=os.getenv('USER'), password=os.getenv('PASSWORD'), port=int(
+                    os.getenv('PORT')), autocommit=True, cursorclass=pymysql.cursors.DictCursor)
+            else:
+                connection = pymysql.connect(host=config['SQL']['HOST'], user=config['SQL']['USER'], password=config['SQL']['PASSWORD'], port=int(
+                    config['SQL']['PORT']), autocommit=True, cursorclass=pymysql.cursors.DictCursor)
+        except Exception as e:
+            logger.error(e)
+        else:
+            break
+
     connection.cursor().execute('CREATE DATABASE IF NOT EXISTS %s;' % "telegram_chatbot")
     connection.select_db("telegram_chatbot")
     logger.info("Database connected")
@@ -218,7 +225,7 @@ def write_tv_review(name, content):
 
 def get_tv_review_names():
     cursor = get_db_connection().cursor()
-    cursor.execute("SELECT name from REVIEW")
+    cursor.execute("SELECT name from review")
     data = cursor.fetchall()
     names = str(set(sum(list(map(lambda x: x.split(','), [
         item[key] for item in data for key in item])), [])))
