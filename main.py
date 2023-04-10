@@ -52,17 +52,17 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 async def activate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Activate account by activation code"""
     user = update.message.from_user
-    msg = "not activated."
     STATES = {True: "Activation succeed, please start using the bot according to the menu.",
-              False: "Activation failed, please contact the admin for help. {}".format(msg)}
+              False: "Activation failed, please contact the admin for help. "}
     if not check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
             await update.message.reply_text("Please add keywords after command /activate <keyword>，喵~")
         else:
             flag, msg = add_user(user.id, keyword)
-            logger.info("User %s Activate the account.", user.first_name)
-            await update.message.reply_text(f"{STATES[flag]}, 喵~")
+            logger.info(
+                f"User {user.first_name} Activate the account with {STATES[flag]+msg}")
+            await update.message.reply_text(f"{STATES[flag]+msg}, 喵~")
     else:
         await update.message.reply_text(f"{STATES[True]}, 喵~")
 
