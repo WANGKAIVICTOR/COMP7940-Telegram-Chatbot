@@ -61,6 +61,7 @@ async def activate(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await update.message.reply_text("Please add keywords after command /activate <keyword>，喵~")
         else:
             flag, msg = add_user(user.id, keyword)
+            logger.info("User %s Activate the account.", user.first_name)
             await update.message.reply_text(f"{STATES[flag]}, 喵~")
     else:
         await update.message.reply_text(f"{STATES[True]}, 喵~")
@@ -72,6 +73,7 @@ async def generate_key(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     if check_user(user.id, check_admin=True):
         activation_code, times = get_key(user.id)
+        logger.info("User %s generate the key.", user.first_name)
         await update.message.reply_text(
             f"Hello {user.first_name}, your activation code is {activation_code}, with {times} times remain.")
     else:
@@ -163,6 +165,7 @@ async def cook(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send meals video to user."""
     user = update.message.from_user
     chatID = update.message.chat.id
+    logger.info("User %s started the cook.", user.first_name)
     if check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
@@ -183,6 +186,7 @@ async def read_tv_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     """Send meals video to user."""
     user = update.message.from_user
     chatID = update.message.chat.id
+    logger.info("User %s started the read_tv_review.", user.first_name)
     if check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
@@ -202,6 +206,7 @@ async def write_review(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     """Store the user's TV review"""
     user = update.message.from_user
     chatID = update.message.chat.id
+    logger.info("User %s started the write_review.", user.first_name)
     if check_user(user.id):
         keyword = " ".join(context.args)
         if not keyword:
@@ -241,9 +246,9 @@ app.add_handler(CommandHandler("writereview", write_review))
 # app.add_handler(CallbackQueryHandler(button))
 # app.add_handler(CommandHandler("startchat", start_chat))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
-# app.run_polling()
-app.run_webhook(
-    listen="0.0.0.0",
-    port=8000,
-    webhook_url="https://22405925chatbot.azurewebsites.net/"
-)
+app.run_polling()
+# app.run_webhook(
+#     listen="0.0.0.0",
+#     port=8000,
+#     webhook_url="https://7940groupchatbot.azurewebsites.net/"
+# )

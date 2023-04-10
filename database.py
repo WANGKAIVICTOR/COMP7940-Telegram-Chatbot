@@ -108,9 +108,9 @@ def insert_video_data():
 
     logger.info("Connected to the database in video part.")
 
-    if(not table_exists(connection, "VIDEO")):
-        cursor.execute("""CREATE TABLE IF NOT EXISTS VIDEO (ID INT PRIMARY KEY NOT NULL,recipeImageSrc VARCHAR(255) NOT NULL,videoURL VARCHAR(255) NOT NULL,recipeName VARCHAR(255) NOT NULL,servingSize VARCHAR(255) NOT NULL,prepTime VARCHAR(255) NOT NULL,calories VARCHAR(255) NOT NULL,fat VARCHAR(255) NOT NULL,carbohydrate VARCHAR(255) NOT NULL,protien VARCHAR(255) NOT NULL,tags VARCHAR(255) NOT NULL,totalTime VARCHAR(255) NOT NULL,dish VARCHAR(255) NOT NULL,ingredient TEXT NOT NULL,expertTips TEXT NOT NULL);""")  # create video table
-        cursor.executemany('INSERT INTO VIDEO (ID,recipeImageSrc,videoURL,recipeName,servingSize,prepTime,calories,fat,carbohydrate,protien,tags,totalTime,dish,ingredient,expertTips) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);', process_video_data())  # insert entities
+    if(not table_exists(connection, "video")):
+        cursor.execute("""CREATE TABLE IF NOT EXISTS video (ID INT PRIMARY KEY NOT NULL,recipeImageSrc VARCHAR(255) NOT NULL,videoURL VARCHAR(255) NOT NULL,recipeName VARCHAR(255) NOT NULL,servingSize VARCHAR(255) NOT NULL,prepTime VARCHAR(255) NOT NULL,calories VARCHAR(255) NOT NULL,fat VARCHAR(255) NOT NULL,carbohydrate VARCHAR(255) NOT NULL,protien VARCHAR(255) NOT NULL,tags VARCHAR(255) NOT NULL,totalTime VARCHAR(255) NOT NULL,dish VARCHAR(255) NOT NULL,ingredient TEXT NOT NULL,expertTips TEXT NOT NULL);""")  # create video table
+        cursor.executemany('INSERT INTO video (ID,recipeImageSrc,videoURL,recipeName,servingSize,prepTime,calories,fat,carbohydrate,protien,tags,totalTime,dish,ingredient,expertTips) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s);', process_video_data())  # insert entities
         connection.commit()  # save the data
         logger.info("Video data inserted.")
 
@@ -127,7 +127,7 @@ def get_meals_tags():
     '''
 
     cursor = get_db_connection().cursor()
-    cursor.execute("SELECT tags from VIDEO")
+    cursor.execute("SELECT tags from video")
     data = cursor.fetchall()
     # process the data and get the unique set
     tags = str(set(sum(list(map(lambda x: x.split(','), [
@@ -143,7 +143,7 @@ def get_info_with_tag(tag):
     '''
 
     cursor = get_db_connection().cursor()
-    cursor.execute("SELECT * from VIDEO WHERE tags LIKE '%"+tag+"%'")
+    cursor.execute("SELECT * from video WHERE tags LIKE '%"+tag+"%'")
     data = cursor.fetchall()
     if(len(data) == 0):
         return ""
@@ -244,9 +244,10 @@ def initialize_activate_table():
     cursor = connection.cursor()  # create the cursor to execute the sql sentence
     logger.info("Connected to the database in initialize activate table part.")
     if(not table_exists(connection, "user")):  # if there is no data in video table, insert
-        cursor.execute("""CREATE TABLE IF NOT EXISTS user (id INT AUTO_INCREMENT PRIMARY KEY,is_admin INT NOT NULL,name VARCHAR(255) NOT NULL,activate_key TEXT NULL,times INT NULL);""")
+        cursor.execute(
+            """CREATE TABLE IF NOT EXISTS user (id INT AUTO_INCREMENT PRIMARY KEY,is_admin INT NOT NULL,name VARCHAR(255) NOT NULL,activate_key TEXT NULL,times INT NULL);""")
         cursor.executemany('INSERT INTO user (is_admin, name, activate_key, times) VALUES (%s,%s,%s,%s);', [
-                        (1, "708072806", generate_activate_key(), 3), (1, "5949216364", generate_activate_key(), 3)])
+            (1, "708072806", generate_activate_key(), 3), (1, "5949216364", generate_activate_key(), 3)])
         connection.commit()  # save the data
     logger.info("initialized the admin info")
     connection.close()  # disconnect
