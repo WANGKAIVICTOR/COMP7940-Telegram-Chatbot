@@ -104,7 +104,12 @@ async def image(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if not keyword:
             await update.message.reply_text("Please add keywords after command /image <keyword>，喵~")
         else:
-            await update.message.reply_photo(tt.reply(query=keyword, context={"user_id": user.id, "type": "IMAGE_CREATE"}))
+            ret = tt.reply(query=keyword, context={
+                           "user_id": user.id, "type": "IMAGE_CREATE"})
+            if ret == None:
+                await update.message.reply_text("请再问我一次吧！喵~")
+            else:
+                await update.message.reply_photo(ret)
     else:
         await update.message.reply_text("Please activate your account！ 喵~ 不给用 喵~")
 
